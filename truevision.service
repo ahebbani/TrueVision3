@@ -1,0 +1,15 @@
+[Unit]
+Description=TrueVision Pi Hub
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/TrueVision
+ExecStart=/home/pi/TrueVision/venv/bin/python main.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

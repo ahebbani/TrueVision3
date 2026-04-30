@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="TrueVision AR Wearable Controller — Remote Phone Interface">
+    <title>TrueVision Controller</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --primary: #bb86fc;
+            --secondary: #03dac6;
+            --error: #cf6679;
+            --text: #ffffff;
+            --text-dim: #aaaaaa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevent text selection on mobile */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            padding-bottom: 40px;
+        }
+
+        h1, h2 { margin-bottom: 15px; font-weight: 500; }
+        h1 { font-size: 24px; color: var(--primary); text-align: center; }
+        h2 { font-size: 18px; margin-top: 30px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+        /* Status Bar */
+        .status-bar {
+            background-color: var(--surface);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .status-item { display: flex; flex-direction: column; }
+        .status-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; }
+        .status-value { font-size: 16px; font-weight: bold; margin-top: 5px; }
+        .status-value.connected { color: var(--secondary); }
+        .status-value.disconnected { color: var(--error); }
+
+        /* Mode Control */
+        .mode-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .btn-mode {
+            background-color: var(--surface);
+            color: var(--text);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-mode:active { transform: scale(0.95); }
+        .btn-mode.active {
+            background-color: rgba(187, 134, 252, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Speed Dial */
+        .speed-dial-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .btn-speed {
+            background-color: var(--surface);
+            color: var(--text);
+            border: none;
+            border-radius: 12px;
+            padding: 20px 15px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-speed:active { transform: scale(0.95); background-color: #2a2a2a; }
+
+        .btn-close {
+            grid-column: span 2;
+            background-color: rgba(207, 102, 121, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+            display: none; /* Shown via JS */
+        }
+
+        /* Forms */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input[type="text"] {
+            flex: 1;
+            background-color: var(--surface);
+            border: 1px solid #444;
+            color: var(--text);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: var(--primary); }
+        .btn-submit {
+            background-color: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 0 20px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Notes List */
+        .notes-list {
+            list-style: none;
+        }
+        .note-item {
+            background-color: var(--surface);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--secondary);
+        }
+        .note-actions { display: flex; gap: 10px; }
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .btn-icon:hover { color: var(--text); }
+        .btn-icon.delete:hover { color: var(--error); }
+        .btn-icon.done:hover { color: var(--secondary); }
+        
+        .empty-state { color: var(--text-dim); text-align: center; padding: 20px; font-style: italic; }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <h1>TrueVision Controller</h1>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">Current Mode</span>
+            <span class="status-value" id="status-mode">UNKNOWN</span>
+        </div>
+        <div class="status-item" style="text-align: right;">
+            <span class="status-label">Server</span>
+            <span class="status-value disconnected" id="status-server">DISCONNECTED</span>
+        </div>
+    </div>
+
+    <h2>Mode Control</h2>
+    <div class="mode-container">
+        <button class="btn-mode" id="btn-mode-face" onclick="setMode('face')">FACE</button>
+        <button class="btn-mode" id="btn-mode-audio" onclick="setMode('audio')">AUDIO</button>
+        <button class="btn-mode" id="btn-mode-both" onclick="setMode('both')">BOTH</button>
+    </div>
+
+    <h2>Speed Dial (AR Display)</h2>
+    <div class="speed-dial-grid">
+        <button class="btn-speed" onclick="launchApp('news')">📰 News</button>
+        <button class="btn-speed" onclick="launchApp('weather')">⛅ Weather</button>
+        <button class="btn-speed" onclick="launchApp('database')">🗄️ Database</button>
+        <button class="btn-speed" onclick="launchApp('youtube')">▶️ YouTube</button>
+        <button class="btn-speed" onclick="launchApp('instagram')">📷 Instagram</button>
+        
+        <button class="btn-speed btn-close" id="btn-close-app" onclick="closeApp()">✖ Close App & Return to HUD</button>
+    </div>
+
+    <h2>Add Face</h2>
+    <div class="input-group">
+        <input type="text" id="face-name" placeholder="Enter person's name">
+        <button class="btn-submit" onclick="enrollFace()">Save</button>
+    </div>
+
+    <h2>Notes & Reminders</h2>
+    <div class="input-group">
+        <input type="text" id="note-text" placeholder="Add a new reminder...">
+        <button class="btn-submit" onclick="addNote()">Add</button>
+    </div>
+    <ul class="notes-list" id="notes-list">
+        <li class="empty-state">Loading notes...</li>
+    </ul>
+
+    <div id="toast">Message</div>
+
+    <script>
+        // API Base
+        const API = '/api';
+
+        // Polling loop for status
+        setInterval(fetchStatus, 2000);
+        
+        // Initial fetches
+        fetchStatus();
+        fetchNotes();
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch(`${API}/status`);
+                const data = await res.json();
+                
+                // Mode buttons
+                document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+                const activeBtn = document.getElementById(`btn-mode-${data.mode}`);
+                if (activeBtn) activeBtn.classList.add('active');
+                
+                document.getElementById('status-mode').textContent = data.mode.toUpperCase();
+                
+                // Server status
+                const srv = document.getElementById('status-server');
+                if (data.server_available) {
+                    srv.textContent = 'CONNECTED';
+                    srv.className = 'status-value connected';
+                } else {
+                    srv.textContent = 'DISCONNECTED';
+                    srv.className = 'status-value disconnected';
+                }
+                
+                // Content launched state
+                const closeBtn = document.getElementById('btn-close-app');
+                if (data.content_launched) {
+                    closeBtn.style.display = 'block';
+                } else {
+                    closeBtn.style.display = 'none';
+                }
+            } catch (e) {
+                console.error("Status fetch failed", e);
+            }
+        }
+
+        async function setMode(mode) {
+            await fetch(`${API}/mode`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: mode})
+            });
+            showToast(`Requested ${mode.toUpperCase()} mode`);
+            fetchStatus();
+        }
+
+        async function launchApp(action) {
+            await fetch(`${API}/launch`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: action})
+            });
+            showToast(`Launching ${action}...`);
+            setTimeout(fetchStatus, 500);
+        }
+
+        async function closeApp() {
+            await fetch(`${API}/close`, { method: 'POST' });
+            showToast("Closing app...");
+            setTimeout(fetchStatus, 500);
+        }
+
+        async function enrollFace() {
+            const input = document.getElementById('face-name');
+            const name = input.value.trim();
+            if (!name) return;
+            
+            showToast("Capturing face...");
+            const res = await fetch(`${API}/enroll`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name})
+            });
+            const data = await res.json();
+            
+            if (data.status === 'ok') {
+                showToast(`Successfully enrolled ${name}`);
+                input.value = '';
+            } else {
+                showToast(`Failed: ${data.message || 'No face found'}`);
+            }
+        }
+
+        async function fetchNotes() {
+            try {
+                const res = await fetch(`${API}/notes`);
+                const notes = await res.json();
+                
+                const list = document.getElementById('notes-list');
+                list.innerHTML = '';
+                
+                if (notes.length === 0) {
+                    list.innerHTML = '<li class="empty-state">No active reminders</li>';
+                    return;
+                }
+                
+                notes.forEach(note => {
+                    const li = document.createElement('li');
+                    li.className = 'note-item';
+                    li.innerHTML = `
+                        <span>${note.text}</span>
+                        <div class="note-actions">
+                            <button class="btn-icon done" onclick="markNoteDone(${note.id})" title="Mark Done">✓</button>
+                            <button class="btn-icon delete" onclick="deleteNote(${note.id})" title="Delete">🗑️</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (e) {
+                console.error("Notes fetch failed", e);
+            }
+        }
+
+        async function addNote() {
+            const input = document.getElementById('note-text');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            await fetch(`${API}/notes`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            });
+            
+            input.value = '';
+            showToast("Reminder added");
+            fetchNotes();
+        }
+
+        async function markNoteDone(id) {
+            await fetch(`${API}/notes/${id}/done`, { method: 'POST' });
+            fetchNotes();
+        }
+
+        async function deleteNote(id) {
+            await fetch(`${API}/notes/${id}`, { method: 'DELETE' });
+            fetchNotes();
+        }
+    </script>
+</body>
+</html>
