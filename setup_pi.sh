@@ -15,6 +15,7 @@ fi
 
 source venv/bin/activate
 pip install --upgrade pip setuptools wheel
+pip uninstall -y opencv-python-headless || true
 pip install -r requirements-pi.txt
 
 mkdir -p models
