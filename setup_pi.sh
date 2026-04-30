@@ -7,12 +7,14 @@ sudo apt update
 sudo apt install -y python3-pip python3-venv python3-dev cmake libopenblas-dev liblapack-dev libx11-dev libgtk-3-dev
 sudo apt install -y libasound2-dev portaudio19-dev
 sudo apt install -y gstreamer1.0-plugins-bad gstreamer1.0-plugins-good
+sudo apt install -y libjpeg-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjp2-7-dev libtiff5-dev libxcb1-dev
 
 if [ ! -d "venv" ]; then
     python3 -m venv venv --system-site-packages
 fi
 
 source venv/bin/activate
+pip install --upgrade pip setuptools wheel
 pip install -r requirements-pi.txt
 
 mkdir -p models

@@ -4,13 +4,14 @@ set -e
 echo "TrueVision Server Setup"
 
 sudo apt update
-sudo apt install -y python3-pip python3-venv curl
+sudo apt install -y python3-pip python3-venv curl pkg-config ffmpeg libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
 
 if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 
 source venv/bin/activate
+pip install --upgrade pip setuptools wheel
 pip install -r requirements-server.txt
 
 if ! command -v ollama &> /dev/null; then
