@@ -21,6 +21,10 @@ run-server-dev:
 db:
 	python3 scripts/visualize_db.py
 
+add-face:
+	@read -p "Enter person name: " name; \
+	python3 scripts/add_face.py --name "$$name"
+
 setup-pi:
 	bash setup_pi.sh
 

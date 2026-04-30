@@ -34,7 +34,10 @@ from face.recognizer import FaceRecognizer
 from face.templates import TemplateManager
 from hud.display import DisplayManager
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("faster_whisper").setLevel(logging.INFO)
+logging.getLogger("multipart").setLevel(logging.WARNING)
 logger = logging.getLogger("main")
 
 # State
@@ -143,10 +146,15 @@ def stop_audio_session():
         
     # Trigger final local transcription if we were offline
     if audio_path and not server_conn.is_available:
-        text = transcriber.transcribe(audio_path)
-        if text:
-            logger.info(f"Local Offline Transcript: {text}")
-            handle_wake_words(text)
+        def _transcribe_offline(path):
+            logger.info("Starting background offline transcription...")
+            text = transcriber.transcribe(path)
+            if text:
+                logger.info(f"Local Offline Transcript: {text}")
+                handle_wake_words(text)
+                
+        import threading
+        threading.Thread(target=_transcribe_offline, args=(audio_path,), daemon=True).start()
             
     audio_session_key = ""
     last_caption_text = ""

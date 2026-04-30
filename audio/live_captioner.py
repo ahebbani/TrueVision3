@@ -98,8 +98,6 @@ class LiveCaptioner:
             time.sleep(sleep_time)
 
     def _update_history(self, new_text: str):
-        # A very basic dedup logic for local captioning.
-        # Server-side handles this much better.
         if not new_text:
             return
             
@@ -107,17 +105,24 @@ class LiveCaptioner:
         if not words:
             return
             
-        # Check if this text overlaps with the end of history
-        overlap = False
-        if len(self.caption_history) > 0:
-            last_word = self.caption_history[-1]
-            if words[0].lower().strip('.,!?') == last_word.lower().strip('.,!?'):
-                overlap = True
-                
-        if not overlap:
+        if not self.caption_history:
             self.caption_history.extend(words)
-            if len(self.caption_history) > self.max_history_words:
-                self.caption_history = self.caption_history[-self.max_history_words:]
+        else:
+            # Find the largest overlap between the end of history and the start of words
+            max_overlap = 0
+            max_k = min(len(self.caption_history), len(words))
+            
+            for k in range(1, max_k + 1):
+                hist_suffix = [w.lower().strip('.,!?') for w in self.caption_history[-k:]]
+                new_prefix = [w.lower().strip('.,!?') for w in words[:k]]
+                if hist_suffix == new_prefix:
+                    max_overlap = k
+                    
+            # Append non-overlapping part
+            self.caption_history.extend(words[max_overlap:])
+            
+        if len(self.caption_history) > self.max_history_words:
+            self.caption_history = self.caption_history[-self.max_history_words:]
 
     def get_current_text(self) -> str:
         with self.lock:
