@@ -205,20 +205,23 @@ def on_person_absent(person_id: int):
     elif audio_path and not server_conn.is_available:
         # Offline processing
         logger.info("Processing meeting offline...")
-        text = transcriber.transcribe(audio_path)
-        if text:
-            # Check for commands
-            handle_wake_words(text)
-            
-            # Local sum
-            prev = db.get_latest_summary(person_id) or ""
-            faces = db.get_faces()
-            name = next((f[1] for f in faces if f[0] == person_id), "Unknown")
-            
-            summary = remote_summarize_one_sentence(server_conn, text, prev, name, 140)
-            
-            if meeting_id:
-                db.update_meeting(meeting_id, transcript=text, summary=summary)
+        
+        def _process_offline(path, p_id, m_id):
+            text = transcriber.transcribe(path)
+            if text:
+                handle_wake_words(text)
+                
+                prev = db.get_latest_summary(p_id) or ""
+                faces = db.get_faces()
+                name = next((f[1] for f in faces if f[0] == p_id), "Unknown")
+                
+                summary = remote_summarize_one_sentence(server_conn, text, prev, name, 140)
+                
+                if m_id:
+                    db.update_meeting(m_id, transcript=text, summary=summary)
+                    
+        import threading
+        threading.Thread(target=_process_offline, args=(audio_path, person_id, meeting_id), daemon=True).start()
                 
     # Restart global audio if we are still in BOTH or AUDIO mode
     if current_mode in ("audio", "both") and not recorder.is_recording:
