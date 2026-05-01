@@ -347,16 +347,23 @@ def main():
     logger.info("Entering main loop...")
     
     while running:
-        frame = camera.read()
-        if frame is None:
-            time.sleep(0.01)
-            continue
+        if current_mode in ("face", "both"):
+            if not camera.is_running:
+                camera.start()
+            frame = camera.read()
+            if frame is None:
+                time.sleep(0.01)
+                continue
+        else:
+            if camera.is_running:
+                camera.stop()
+            frame = None
             
         faces_info = []
         detected_pids = []
         
         # Face Recognition
-        if current_mode in ("face", "both"):
+        if frame is not None:
             gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
             rects = detector.detect(frame)
             
