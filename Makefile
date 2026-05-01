@@ -23,7 +23,7 @@ db:
 
 add-face:
 	@read -p "Enter person name: " name; \
-	python3 scripts/add_face.py --name "$$name"
+	PYTHONPATH=. python3 scripts/add_face.py --name "$$name"
 
 setup-pi:
 	bash setup_pi.sh

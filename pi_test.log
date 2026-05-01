@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/adity/Files/TrueVision3/main.py", line 21, in <module>
+    from commands.intent_router import IntentRouter
+  File "/Users/adity/Files/TrueVision3/commands/intent_router.py", line 16, in <module>
+    from connection.discovery import ServerConnection
+  File "/Users/adity/Files/TrueVision3/connection/discovery.py", line 15, in <module>
+    from zeroconf import ServiceBrowser, Zeroconf
+ModuleNotFoundError: No module named 'zeroconf'
